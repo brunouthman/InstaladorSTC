@@ -21,6 +21,9 @@ class Application:
         self.sairInstalador()
 
     def validaUserOracle(self):
+        text = 'Atenção: a instalação apagará todos os dados das tabelas!'
+        alert(text=text, title="Instalador STC", button='OK')
+
         usuario = self.usuario.get()
         senha = self.senha.get()
 
@@ -122,29 +125,53 @@ class Application:
         pos_ini = out.find(b'C:\\')
         pos_fin = out.find(b'sqlnet.ora')
         pos_falha = out.find(b'Falha')
+        pos_erro = out.find(b'erro')
 
         if  (pos_ini or pos_fin) > 0:       #####   aqui trocar por simbolo de menor(<)
             self.mensagem["text"] = 'Oracle não instalado, por favor verifique!!!'
             root.mainloop()
-        else:
-            # caminho = " "
 
-############# caminho = (out[pos_ini:pos_fin])    >>>> aqui esta o caminho
-#######>>>>>> excluir depois
-            caminho = 'C:\\app\\bruno.uthman\\product\\11.2.0\\client_1\\network\\admin'
-#######>>>>>> excluir depois os comments
+        if  pos_erro >= 0:
+            self.mensagem["text"] = 'Oracle não instalado, por favor verifique!!!'
+            root.mainloop()
 
-            if  pos_falha > 0:
-                alert(text="Configurar TNSNAME ORCL!!!", title="Instalador STC", button='OK')
-                os.system('{}\\tnsnames.ora'.format(caminho))
-                self.mensagem["text"] = 'logar novamente...'
-                root.mainloop()
-            else:
-                print('Oracle ok')
+
+    #   caminho = " "
+
+########caminho = (out[pos_ini:pos_fin])    >>>> aqui esta o caminho
+#######>> excluir depois
+        caminho = 'C:\\app\\bruno.uthman\\product\\11.2.0\\client_1\\network\\admin'
+#######>> excluir depois os comments
+
+        if  pos_falha >= 0:
+            alert(text="Configurar TNSNAME ORCL!!!", title="Instalador STC", button='OK')
+            os.system('{}\\tnsnames.ora'.format(caminho))
+            self.mensagem["text"] = 'logar novamente...'
+            root.mainloop()
+
+
+        print('Oracle ok')
+        proc.kill()
 
 ######### start no listner
 
-        os.system('lsnrctl start')
+        proc = subprocess.Popen(["lsnrctl", "start"], stdout=subprocess.PIPE, shell=True)
+        (out, err) = proc.communicate()
+
+        print(out)
+
+        pos_comando_interno = out.find(b'comando interno')
+        pos_erro = out.find(b'erro')
+        pos_falha = out.find(b'Falha')
+
+        if  (pos_comando_interno or pos_erro or pos_falha) >= 0:
+            self.mensagem["text"] = 'Erro no start listener Oracle, verifique!!!'
+            root.mainloop()
+
+
+        print('Listener ok')
+        proc.kill()
+
 
 
         print('ENDDDDD!!!!!!')
